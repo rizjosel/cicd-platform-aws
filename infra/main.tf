@@ -1,7 +1,3 @@
-provider "aws" {
-  region = "ap-southeast-1"
-}
-
 locals {
   azs = ["ap-southeast-1a", "ap-southeast-1b"]
 }
