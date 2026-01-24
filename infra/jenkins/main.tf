@@ -41,15 +41,26 @@ resource "aws_instance" "jenkins" {
 
   user_data = <<-EOF
     #!/bin/bash
+    # Update the system
     sudo apt update -y
+    sudo apt upgrade -y
+
+    # Install Java
     sudo apt install openjdk-11-jdk -y
+
+    # Add Jenkins repo and key
     wget -O /etc/apt/sources.list.d/jenkins.list https://pkg.jenkins.io/debian-stable/jenkins.list
-    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc
+
+    # Update and install Jenkins
     sudo apt update -y
     sudo apt install jenkins -y
+
+    # Enable and start Jenkins service
     sudo systemctl enable jenkins
     sudo systemctl start jenkins
   EOF
+
 
   tags = {
     Name = "jenkins-server"
