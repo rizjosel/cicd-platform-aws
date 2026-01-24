@@ -39,30 +39,22 @@ resource "aws_instance" "jenkins" {
 
   associate_public_ip_address = true
 
-  user_data = <<-EOF
-    #!/bin/bash
-    # Update the system
-    sudo apt update -y
-    sudo apt upgrade -y
-
-    # Install Java
-    sudo apt install openjdk-11-jdk -y
-
-    # Add Jenkins repo and key
-    wget -O /etc/apt/sources.list.d/jenkins.list https://pkg.jenkins.io/debian-stable/jenkins.list
-    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc
-
-    # Update and install Jenkins
-    sudo apt update -y
-    sudo apt install jenkins -y
-
-    # Enable and start Jenkins service
-    sudo systemctl enable jenkins
-    sudo systemctl start jenkins
-  EOF
-
-
   tags = {
     Name = "jenkins-server"
   }
+}
+
+resource "aws_ebs_volume" "jenkins_server_volume" {
+  availability_zone = "us-west-2a"
+  size              = 30
+  type              = "gp3"
+  tags = {
+    Name = "jenkins-server-volume"
+  }
+}
+
+resource "aws_volume_attachment" "ebs_att" {
+  device_name = "/dev/sdh"
+  volume_id   = aws_ebs_volume.jenkins_server_volume.id
+  instance_id = aws_instance.jenkins.id
 }
