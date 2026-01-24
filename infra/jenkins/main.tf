@@ -41,13 +41,14 @@ resource "aws_instance" "jenkins" {
 
   user_data = <<-EOF
     #!/bin/bash
-    yum update -y
-    amazon-linux-extras install java-openjdk11 -y
-    wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
-    rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io.key
-    yum install jenkins -y
-    systemctl enable jenkins
-    systemctl start jenkins
+    sudo apt update -y
+    sudo apt install openjdk-11-jdk -y
+    wget -O /etc/apt/sources.list.d/jenkins.list https://pkg.jenkins.io/debian-stable/jenkins.list
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+    sudo apt update -y
+    sudo apt install jenkins -y
+    sudo systemctl enable jenkins
+    sudo systemctl start jenkins
   EOF
 
   tags = {
