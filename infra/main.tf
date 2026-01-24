@@ -42,7 +42,9 @@ resource "aws_subnet" "private" {
 
 resource "aws_eip" "nat" {
   count = 2
-  vpc   = true
+  tags = {
+    Name = "eks-nat-eip-${count.index}"
+  }
 }
 
 resource "aws_nat_gateway" "main" {
