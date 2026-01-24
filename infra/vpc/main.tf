@@ -1,34 +1,44 @@
-resource "aws_vpc" "eks_vpc" {
-  cidr_block = "10.0.0.0/16"
-  tags = {
-    Name = "eks_vpc" 
-  }
+resource "aws_vpc" "main" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
 }
 
-resource "aws_subnet" "eks_public_subnet" {
-  vpc_id     = aws_vpc.eks_vpc.id
-  cidr_block = "10.0.1.0/24"
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
 }
 
-resource "aws_subnet" "eks_private_subnet" {
-  vpc_id     = aws_vpc.eks_vpc.id
-  cidr_block = "10.0.2.0/24"
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
 }
 
-resource "aws_internet_gateway" "eks_igw" {
-  vpc_id = aws_vpc.eks_vpc.id
-}
-
-resource "aws_route_table" "eks_rt" {
-  vpc_id = aws_vpc.eks_vpc.id
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
 
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.eks_igw.id
+    gateway_id = aws_internet_gateway.main.id
   }
 }
 
-resource "aws_route_table_association" "eks_public_rt_assoc" {
-  subnet_id      = aws_subnet.eks_public_subnet.id
-  route_table_id = aws_route_table.eks_rt.id
+resource "aws_subnet" "private" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.1.0/24"
+  availability_zone = "ap-southeast-1a"
+}
+
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.0.0/24"
+  availability_zone       = "ap-southeast-1a"
+  map_public_ip_on_launch = true
+}
+
+resource "aws_route_table_association" "public" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  subnet_id      = aws_subnet.private.id
+  route_table_id = aws_route_table.private.id
 }
