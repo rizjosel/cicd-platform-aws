@@ -31,7 +31,7 @@ resource "aws_security_group" "jenkins" {
 }
 
 resource "aws_instance" "jenkins" {
-  ami                    = "ami-0df7a207adb9748c7" # Amazon Linux 2 (ap-southeast-1)
+  ami                    = "ami-08d59269edddde222" # Ubuntu Server 24.04 LTS (HVM)
   instance_type          = "t3.micro"
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [aws_security_group.jenkins.id]
