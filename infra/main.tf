@@ -12,9 +12,9 @@ module "eks" {
 */
 
 module "jenkins" {
-  source    = "../platform/jenkins"
+  source    = "./jenkins"
   vpc_id    = module.vpc.vpc_id
   subnet_id = module.vpc.public_subnet_ids[0]
 
-  depends_on = [module.vpc]   # <--- NEW
+  depends_on = [module.vpc]
 }
