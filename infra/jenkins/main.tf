@@ -45,11 +45,14 @@ resource "aws_instance" "jenkins" {
 }
 
 resource "aws_ebs_volume" "jenkins_server_volume" {
-  availability_zone = "us-west-2a"
+  availability_zone = aws_instance.jenkins.availability_zone
   size              = 30
   type              = "gp3"
   tags = {
     Name = "jenkins-server-volume"
+  }
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
