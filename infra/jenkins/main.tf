@@ -38,6 +38,22 @@ resource "aws_instance" "jenkins" {
   key_name               = "cli-user"
 
   associate_public_ip_address = true
+  user_data = <<-EOF
+              #!/bin/bash
+              mkdir -p /jenkins-data
+
+              # Check if volume is formatted
+              if ! blkid /dev/nvme1n1; then
+                mkfs -t ext4 /dev/nvme1n1
+              fi
+
+              # Mount the volume
+              mount /dev/nvme1n1 /jenkins-data
+
+              # Add to fstab if not already present
+              grep -qxF '/dev/nvme1n1 /jenkins-data ext4 defaults,nofail 0 2' /etc/fstab || \
+                echo '/dev/nvme1n1 /jenkins-data ext4 defaults,nofail 0 2' >> /etc/fstab
+              EOF
 
   tags = {
     Name = "jenkins-server"
