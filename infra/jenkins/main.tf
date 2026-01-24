@@ -67,9 +67,9 @@ resource "aws_ebs_volume" "jenkins_server_volume" {
   tags = {
     Name = "jenkins-server-volume"
   }
-  lifecycle {
-    prevent_destroy = true
-  }
+#  lifecycle {
+#    prevent_destroy = true
+#  }
 }
 
 resource "aws_volume_attachment" "ebs_att" {
