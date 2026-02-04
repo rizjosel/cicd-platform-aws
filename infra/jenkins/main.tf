@@ -1,21 +1,20 @@
-resource "aws_security_group" "jenkins" {
-  name   = "jenkins-sg"
-  vpc_id = var.vpc_id
+resource "aws_security_group" "jenkins_sg" {
+  name        = "jenkins-sg"
+  description = "Allow Jenkins access"
+  vpc_id      = var.vpc_id 
 
   ingress {
-    description = "Jenkins UI"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
+    cidr_blocks = ["0.0.0.0/0"] 
   }
 
   ingress {
-    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_cidr]
+    cidr_blocks = ["0.0.0.0/0"]  
   }
 
   egress {
@@ -31,49 +30,66 @@ resource "aws_security_group" "jenkins" {
 }
 
 resource "aws_instance" "jenkins" {
-  ami                    = "ami-08d59269edddde222" # Ubuntu Server 24.04 LTS (HVM)
-  instance_type          = "t3.micro"
-  subnet_id              = var.subnet_id
-  vpc_security_group_ids = [aws_security_group.jenkins.id]
-  key_name               = "cli-user"
-
+  ami           = "ami-08d59269edddde222"
+  instance_type = "t3.medium"
+  subnet_id     = var.public_a_subnet_id
   associate_public_ip_address = true
+  key_name      = "riz"
+
+  vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
+
+  tags = {
+    Name = "jenkins"
+  }
   user_data = <<-EOF
-              #!/bin/bash
-              sudo mkdir -p /jenkins-data
+    #!/bin/bash
+    set -eux
 
-              # Check if volume is formatted
-              if ! blkid /dev/nvme1n1; then
-                sudo mkfs -t ext4 /dev/nvme1n1
-              fi
+    DEVICE="/dev/nvme1n1"
+    MOUNT_POINT="/var/lib/jenkins"
 
-              # Mount the volume
-              sudo mount /dev/nvme1n1 /jenkins-data
+    # Wait for EBS
+    while [ ! -b "$DEVICE" ]; do
+    sleep 5
+    done
 
-              # Add to fstab if not already present
-              grep -qxF '/dev/nvme1n1 /jenkins-data ext4 defaults,nofail 0 2' /etc/fstab || \
-                echo '/dev/nvme1n1 /jenkins-data ext4 defaults,nofail 0 2' >> /etc/fstab
-              EOF
+    # Mount Jenkins home FIRST
+    mkdir -p $MOUNT_POINT
+    mount $DEVICE $MOUNT_POINT
+    grep -q "$DEVICE" /etc/fstab || echo "$DEVICE $MOUNT_POINT xfs defaults,nofail 0 2" >> /etc/fstab
 
-  tags = {
-    Name = "jenkins-server"
+    # System deps
+    apt-get update -y
+    apt install -y openjdk-17-jdk
+
+    # Jenkins repo (fixed key)
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key \
+    | tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+
+    echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+    https://pkg.jenkins.io/debian-stable binary/" \
+    > /etc/apt/sources.list.d/jenkins.list
+
+    apt-get update -y
+    apt-get install -y jenkins
+
+    # Permissions AFTER install
+    chown -R jenkins:jenkins /var/lib/jenkins
+
+    systemctl enable jenkins
+    systemctl start jenkins
+  EOF
+}
+
+data "aws_ebs_volume" "jenkins_data" {
+  filter {
+    name   = "volume-id"
+    values = ["vol-0c181271c028452ee"]
   }
 }
 
-resource "aws_ebs_volume" "jenkins_server_volume" {
-  availability_zone = aws_instance.jenkins.availability_zone
-  size              = 30
-  type              = "gp3"
-  tags = {
-    Name = "jenkins-server-volume"
-  }
-#  lifecycle {
-#    prevent_destroy = true
-#  }
-}
-
-resource "aws_volume_attachment" "ebs_att" {
-  device_name = "/dev/sdh"
-  volume_id   = aws_ebs_volume.jenkins_server_volume.id
+resource "aws_volume_attachment" "jenkins_attach" {
+  device_name = "/dev/xvdf"
+  volume_id   = data.aws_ebs_volume.jenkins_data.id
   instance_id = aws_instance.jenkins.id
 }

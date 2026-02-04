@@ -3,18 +3,20 @@ module "vpc" {
 }
 
 /*
-module "eks" {
-  source          = "./eks"
-  vpc_id          = module.vpc.vpc_id
-  public_subnets  = module.vpc.public_subnet_ids
-  private_subnets = module.vpc.private_subnet_ids
+module "jenkins" {
+  source               = "./jenkins"
+  vpc_id               = module.vpc.vpc_id
+  public_a_subnet_id   = module.vpc.public_a_subnet_id
+  public_b_subnet_id   = module.vpc.public_b_subnet_id
 }
 */
 
-module "jenkins" {
-  source    = "./jenkins"
-  vpc_id    = module.vpc.vpc_id
-  subnet_id = module.vpc.public_subnet_ids[0]
+module "eks" {
+  source = "./eks"
 
-  depends_on = [module.vpc]
+  vpc_id             = module.vpc.vpc_id
+  public_a_subnet_id  = module.vpc.public_a_subnet_id
+  public_b_subnet_id  = module.vpc.public_b_subnet_id
+  private_a_subnet_id = module.vpc.private_a_subnet_id
+  private_b_subnet_id = module.vpc.private_b_subnet_id
 }

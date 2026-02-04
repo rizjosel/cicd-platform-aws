@@ -1,12 +1,3 @@
-variable "vpc_id" {
-  type = string
-}
-
-variable "subnet_id" {
-  type = string
-}
-
-variable "allowed_cidr" {
-  type    = string
-  default = "0.0.0.0/0"
-}
+variable "vpc_id" {}
+variable "public_a_subnet_id" {}
+variable "public_b_subnet_id" {}
