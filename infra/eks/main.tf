@@ -18,7 +18,6 @@ resource "aws_iam_role_policy_attachment" "eks_vpc_controller" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
 }
 #node role
-# Node Role
 resource "aws_iam_role" "eks_node_role" {
   name = "eks-node-role"
   assume_role_policy = jsonencode({

@@ -11,6 +11,7 @@ module "jenkins" {
 }
 */
 
+/*
 module "eks" {
   source = "./eks"
 
@@ -20,3 +21,4 @@ module "eks" {
   private_a_subnet_id = module.vpc.private_a_subnet_id
   private_b_subnet_id = module.vpc.private_b_subnet_id
 }
+*/
